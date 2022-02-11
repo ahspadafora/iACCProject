@@ -167,6 +167,7 @@ class ListViewController: UITableViewController {
         items.count
     }
     
+    // cell is dependent on ItemViewModel
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let item = items[indexPath.row]
         let cell = tableView.dequeueReusableCell(withIdentifier: "ItemCell") ?? UITableViewCell(style: .subtitle, reuseIdentifier: "ItemCell")
@@ -219,64 +220,6 @@ extension UIViewController {
         let alert = UIAlertController(title: "Error", message: error.localizedDescription, preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: "Ok", style: .default))
         showDetailViewController(alert, sender: self)
-    }
-}
-
-struct ItemViewModel {
-    let title: String
-    let subtitle: String
-    let select: () -> Void
-}
-
-extension ItemViewModel {
-    init(friend: Friend, selection: @escaping () -> Void) {
-        title = friend.name
-        subtitle = friend.phone
-        select = selection
-    }
-}
-extension ItemViewModel {
-    init(card: Card, selection: @escaping () -> Void) {
-        title = card.number
-        subtitle = card.holder
-        select = selection
-    }
-}
-
-extension ItemViewModel {
-    init(transfer: Transfer, longDateStyle: Bool, selection: @escaping () -> Void) {
-        let numberFormatter = Formatters.number
-        numberFormatter.numberStyle = .currency
-        numberFormatter.currencyCode = transfer.currencyCode
-        
-        let amount = numberFormatter.string(from: transfer.amount as NSNumber)!
-        title = "\(amount) • \(transfer.description)"
-        
-        let dateFormatter = Formatters.date
-        if longDateStyle {
-            dateFormatter.dateStyle = .long
-            dateFormatter.timeStyle = .short
-            subtitle = "Sent to: \(transfer.recipient) on \(dateFormatter.string(from: transfer.date))"
-        } else {
-            dateFormatter.dateStyle = .short
-            dateFormatter.timeStyle = .short
-            subtitle = "Received from: \(transfer.sender) on \(dateFormatter.string(from: transfer.date))"
-        }
-        select = selection
-    }
-}
-
-extension ItemViewModel {
-    init(_ item: Any, longDateStyle: Bool, selection: @escaping () -> Void) {
-        if let friend = item as? Friend {
-            self.init(friend: friend, selection: selection)
-        } else if let card = item as? Card {
-            self.init(card: card, selection: selection)
-        } else if let transfer = item as? Transfer {
-            self.init(transfer: transfer, longDateStyle: longDateStyle, selection: selection)
-        } else {
-            fatalError("unknown item: \(item)")
-        }
     }
 }
 
