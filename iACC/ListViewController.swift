@@ -9,26 +9,9 @@ protocol ItemsService {
     func loadItems(completion: @escaping (Result<[ItemViewModel], Error>) -> Void)
 }
 
-
-
-// Adapter pattern allows us to keep our different service implementations independent of the ItemsService
-// Use the Adapter pattern to keep low-level components and high-level components independent of eachother
 class ListViewController: UITableViewController {
     var items = [ItemViewModel]()
-    
     var service: ItemsService?
-    var cache: ItemsService?
-    
-    var retryCount = 0
-    var maxRetryCount = 0
-    var shouldRetry = false
-
-    var longDateStyle = false
-
-    var fromReceivedTransfersScreen = false
-    var fromSentTransfersScreen = false
-    var fromCardsScreen = false
-    var fromFriendsScreen = false
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -51,38 +34,13 @@ class ListViewController: UITableViewController {
     private func handleAPIResult(_ result: Result<[ItemViewModel], Error>) {
         switch result {
         case let .success(items):
-            self.retryCount = 0
             self.items = items
             self.refreshControl?.endRefreshing()
             self.tableView.reloadData()
             
         case let .failure(error):
-            if shouldRetry && retryCount < maxRetryCount {
-                retryCount += 1
-                refresh()
-                return
-            }
-            
-            retryCount = 0
-            
-            if fromFriendsScreen && User.shared?.isPremium == true {
-                cache?.loadItems { [weak self] result in
-                    DispatchQueue.mainAsyncIfNeeded {
-                        switch result {
-                        case let .success(items):
-                            self?.items = items
-                            self?.tableView.reloadData()
-                            
-                        case let .failure(error):
-                            self?.showError(error: error)
-                        }
-                        self?.refreshControl?.endRefreshing()
-                    }
-                }
-            } else {
-                self.showError(error: error)
-                self.refreshControl?.endRefreshing()
-            }
+            self.showError(error: error)
+            self.refreshControl?.endRefreshing()
         }
     }
     
