@@ -89,6 +89,13 @@ class MainTabBarController: UITabBarController {
 	private func makeReceivedTransfersList() -> ListViewController {
 		let vc = ListViewController()
 		vc.fromReceivedTransfersScreen = true
+        
+        vc.shouldRetry = true
+        vc.maxRetryCount = 1
+        vc.longDateStyle = false
+        
+        vc.navigationItem.title = "Received"
+        vc.navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Request", style: .done, target: vc, action: #selector(requestMoney))
 		return vc
 	}
 	

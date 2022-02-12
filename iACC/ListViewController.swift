@@ -34,15 +34,6 @@ class ListViewController: UITableViewController {
         
         refreshControl = UIRefreshControl()
         refreshControl?.addTarget(self, action: #selector(refresh), for: .valueChanged)
-        
-        if fromReceivedTransfersScreen {
-            shouldRetry = true
-            maxRetryCount = 1
-            longDateStyle = false
-            
-            navigationItem.title = "Received"
-            navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Request", style: .done, target: self, action: #selector(requestMoney))
-        }
     }
     
     override func viewWillAppear(_ animated: Bool) {
