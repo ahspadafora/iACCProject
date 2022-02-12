@@ -35,11 +35,7 @@ class ListViewController: UITableViewController {
         refreshControl = UIRefreshControl()
         refreshControl?.addTarget(self, action: #selector(refresh), for: .valueChanged)
         
-        if fromCardsScreen {
-            shouldRetry = false
-            title = "Cards"
-            navigationItem.rightBarButtonItem = UIBarButtonItem(barButtonSystemItem: .add, target: self, action: #selector(addCard))
-        } else if fromSentTransfersScreen {
+        if fromSentTransfersScreen {
             shouldRetry = true
             maxRetryCount = 1
             longDateStyle = true
