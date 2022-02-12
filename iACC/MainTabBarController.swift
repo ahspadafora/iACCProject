@@ -5,59 +5,59 @@
 import UIKit
 
 class MainTabBarController: UITabBarController {
-	
+    
     private var friendsCache: FriendsCache!
     
     // example of initializer injection where you define all of the dependencies you need
     convenience init(friendsCache: FriendsCache) {
-		self.init(nibName: nil, bundle: nil)
+        self.init(nibName: nil, bundle: nil)
         self.friendsCache = friendsCache
-		self.setupViewController()
-	}
-
-	private func setupViewController() {
-		viewControllers = [
-			makeNav(for: makeFriendsList(), title: "Friends", icon: "person.2.fill"),
-			makeTransfersList(),
-			makeNav(for: makeCardsList(), title: "Cards", icon: "creditcard.fill")
-		]
-	}
-	
-	private func makeNav(for vc: UIViewController, title: String, icon: String) -> UIViewController {
-		vc.navigationItem.largeTitleDisplayMode = .always
-		
-		let nav = UINavigationController(rootViewController: vc)
-		nav.tabBarItem.image = UIImage(
-			systemName: icon,
-			withConfiguration: UIImage.SymbolConfiguration(scale: .large)
-		)
-		nav.tabBarItem.title = title
-		nav.navigationBar.prefersLargeTitles = true
-		return nav
-	}
-	
-	private func makeTransfersList() -> UIViewController {
-		let sent = makeSentTransfersList()
-		sent.navigationItem.title = "Sent"
-		sent.navigationItem.largeTitleDisplayMode = .always
-		
-		let received = makeReceivedTransfersList()
-		received.navigationItem.title = "Received"
-		received.navigationItem.largeTitleDisplayMode = .always
-		
-		let vc = SegmentNavigationViewController(first: sent, second: received)
-		vc.tabBarItem.image = UIImage(
-			systemName: "arrow.left.arrow.right",
-			withConfiguration: UIImage.SymbolConfiguration(scale: .large)
-		)
-		vc.title = "Transfers"
-		vc.navigationBar.prefersLargeTitles = true
-		return vc
-	}
-	
-	private func makeFriendsList() -> ListViewController {
-		let vc = ListViewController()
-		vc.fromFriendsScreen = true
+        self.setupViewController()
+    }
+    
+    private func setupViewController() {
+        viewControllers = [
+            makeNav(for: makeFriendsList(), title: "Friends", icon: "person.2.fill"),
+            makeTransfersList(),
+            makeNav(for: makeCardsList(), title: "Cards", icon: "creditcard.fill")
+        ]
+    }
+    
+    private func makeNav(for vc: UIViewController, title: String, icon: String) -> UIViewController {
+        vc.navigationItem.largeTitleDisplayMode = .always
+        
+        let nav = UINavigationController(rootViewController: vc)
+        nav.tabBarItem.image = UIImage(
+            systemName: icon,
+            withConfiguration: UIImage.SymbolConfiguration(scale: .large)
+        )
+        nav.tabBarItem.title = title
+        nav.navigationBar.prefersLargeTitles = true
+        return nav
+    }
+    
+    private func makeTransfersList() -> UIViewController {
+        let sent = makeSentTransfersList()
+        sent.navigationItem.title = "Sent"
+        sent.navigationItem.largeTitleDisplayMode = .always
+        
+        let received = makeReceivedTransfersList()
+        received.navigationItem.title = "Received"
+        received.navigationItem.largeTitleDisplayMode = .always
+        
+        let vc = SegmentNavigationViewController(first: sent, second: received)
+        vc.tabBarItem.image = UIImage(
+            systemName: "arrow.left.arrow.right",
+            withConfiguration: UIImage.SymbolConfiguration(scale: .large)
+        )
+        vc.title = "Transfers"
+        vc.navigationBar.prefersLargeTitles = true
+        return vc
+    }
+    
+    private func makeFriendsList() -> ListViewController {
+        let vc = ListViewController()
+        vc.fromFriendsScreen = true
         vc.shouldRetry = true
         vc.maxRetryCount = 2
         vc.title = "Friends"
@@ -77,6 +77,12 @@ class MainTabBarController: UITabBarController {
 	private func makeSentTransfersList() -> ListViewController {
 		let vc = ListViewController()
 		vc.fromSentTransfersScreen = true
+        vc.shouldRetry = true
+        vc.maxRetryCount = 1
+        vc.longDateStyle = true
+        
+        vc.navigationItem.title = "Sent"
+        vc.navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Send", style: .done, target: vc, action: #selector(sendMoney))
 		return vc
 	}
 	
@@ -95,9 +101,9 @@ class MainTabBarController: UITabBarController {
         vc.service = CardAPIItemServiceAdapter(api: CardAPI.shared, select: { [weak vc] (item) in
             vc?.select(card: item)
         })
-		return vc
-	}
-	
+        return vc
+    }
+    
 }
 
 struct FriendsAPIItemServiceAdapter: ItemsService {
@@ -112,7 +118,7 @@ struct FriendsAPIItemServiceAdapter: ItemsService {
                     cache.save(items)
                     return items.map { item in
                         ItemViewModel(friend: item, selection: {
-                           select(item)
+                            select(item)
                         })
                     }
                 })
@@ -131,12 +137,38 @@ struct CardAPIItemServiceAdapter: ItemsService {
                 completion(result.map { items in
                     return items.map { item in
                         ItemViewModel(card: item, selection: {
-                           select(item)
+                            select(item)
                         })
                     }
                 })
             }
         }
+    }
+}
+
+struct TransfersAPIItemServiceAdapter: ItemsService {
+    let api: TransfersAPI
+    let longDateStyle: Bool
+    let fromSentTransfersScreen: Bool
+    let select: (Transfer) -> Void
+    
+    func loadItems(completion: @escaping (Result<[ItemViewModel], Error>) -> Void) {
+        api.loadTransfers { result in
+            DispatchQueue.mainAsyncIfNeeded {
+                completion(result.map { items in
+                    items
+                        .filter { fromSentTransfersScreen ? $0.isSender : !$0.isSender }
+                        .map { item in
+                        ItemViewModel(
+                            transfer: item,
+                            longDateStyle: longDateStyle,
+                            selection: {
+                                select(item)
+                            })
+                        }
+                    })
+                }
+            }
     }
 }
 

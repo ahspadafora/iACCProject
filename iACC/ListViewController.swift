@@ -21,9 +21,9 @@ class ListViewController: UITableViewController {
     var retryCount = 0
     var maxRetryCount = 0
     var shouldRetry = false
-    
+
     var longDateStyle = false
-    
+
     var fromReceivedTransfersScreen = false
     var fromSentTransfersScreen = false
     var fromCardsScreen = false
@@ -35,15 +35,7 @@ class ListViewController: UITableViewController {
         refreshControl = UIRefreshControl()
         refreshControl?.addTarget(self, action: #selector(refresh), for: .valueChanged)
         
-        if fromSentTransfersScreen {
-            shouldRetry = true
-            maxRetryCount = 1
-            longDateStyle = true
-            
-            navigationItem.title = "Sent"
-            navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Send", style: .done, target: self, action: #selector(sendMoney))
-            
-        } else if fromReceivedTransfersScreen {
+        if fromReceivedTransfersScreen {
             shouldRetry = true
             maxRetryCount = 1
             longDateStyle = false
@@ -85,7 +77,7 @@ class ListViewController: UITableViewController {
                             }
                         })
                     }
-                }   
+                }
         } else {
             fatalError("unknown context")
         }
