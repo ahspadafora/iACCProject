@@ -83,6 +83,14 @@ class MainTabBarController: UITabBarController {
         
         vc.navigationItem.title = "Sent"
         vc.navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Send", style: .done, target: vc, action: #selector(sendMoney))
+        vc.service = TransfersAPIItemServiceAdapter(
+            api: TransfersAPI.shared,
+            longDateStyle: true,
+            fromSentTransfersScreen: true,
+            select: { [weak vc] (item) in
+                vc?.select(transfer: item)
+            })
+        
 		return vc
 	}
 	
@@ -96,6 +104,15 @@ class MainTabBarController: UITabBarController {
         
         vc.navigationItem.title = "Received"
         vc.navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Request", style: .done, target: vc, action: #selector(requestMoney))
+        
+        vc.service = TransfersAPIItemServiceAdapter(
+            api: TransfersAPI.shared,
+            longDateStyle: false,
+            fromSentTransfersScreen: false,
+            select: { [weak vc] (item) in
+                vc?.select(transfer: item)
+            })
+        
 		return vc
 	}
 	
