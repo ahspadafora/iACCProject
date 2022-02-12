@@ -83,10 +83,8 @@ class MainTabBarController: UITabBarController {
         
         vc.navigationItem.title = "Sent"
         vc.navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Send", style: .done, target: vc, action: #selector(sendMoney))
-        vc.service = TransfersAPIItemServiceAdapter(
+        vc.service = SentTransfersAPIItemServiceAdapter(
             api: TransfersAPI.shared,
-            longDateStyle: true,
-            fromSentTransfersScreen: true,
             select: { [weak vc] (item) in
                 vc?.select(transfer: item)
             })
@@ -105,10 +103,8 @@ class MainTabBarController: UITabBarController {
         vc.navigationItem.title = "Received"
         vc.navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Request", style: .done, target: vc, action: #selector(requestMoney))
         
-        vc.service = TransfersAPIItemServiceAdapter(
+        vc.service = ReceivedTransfersAPIItemServiceAdapter(
             api: TransfersAPI.shared,
-            longDateStyle: false,
-            fromSentTransfersScreen: false,
             select: { [weak vc] (item) in
                 vc?.select(transfer: item)
             })
@@ -170,10 +166,8 @@ struct CardAPIItemServiceAdapter: ItemsService {
     }
 }
 
-struct TransfersAPIItemServiceAdapter: ItemsService {
+struct SentTransfersAPIItemServiceAdapter: ItemsService {
     let api: TransfersAPI
-    let longDateStyle: Bool
-    let fromSentTransfersScreen: Bool
     let select: (Transfer) -> Void
     
     func loadItems(completion: @escaping (Result<[ItemViewModel], Error>) -> Void) {
@@ -181,11 +175,35 @@ struct TransfersAPIItemServiceAdapter: ItemsService {
             DispatchQueue.mainAsyncIfNeeded {
                 completion(result.map { items in
                     items
-                        .filter { fromSentTransfersScreen ? $0.isSender : !$0.isSender }
+                        .filter { $0.isSender }
                         .map { item in
                         ItemViewModel(
                             transfer: item,
-                            longDateStyle: longDateStyle,
+                            longDateStyle: true,
+                            selection: {
+                                select(item)
+                            })
+                        }
+                    })
+                }
+            }
+    }
+}
+
+struct ReceivedTransfersAPIItemServiceAdapter: ItemsService {
+    let api: TransfersAPI
+    let select: (Transfer) -> Void
+    
+    func loadItems(completion: @escaping (Result<[ItemViewModel], Error>) -> Void) {
+        api.loadTransfers { result in
+            DispatchQueue.mainAsyncIfNeeded {
+                completion(result.map { items in
+                    items
+                        .filter { !$0.isSender }
+                        .map { item in
+                        ItemViewModel(
+                            transfer: item,
+                            longDateStyle: false,
                             selection: {
                                 select(item)
                             })
