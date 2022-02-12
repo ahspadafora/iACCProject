@@ -71,6 +71,12 @@ class MainTabBarController: UITabBarController {
             select: { [weak vc] (item) in
                 vc?.select(friend: item)
             })
+        
+        vc.cache = FriendsCacheItemsServiceAdapter(
+            cache: friendsCache,
+            select: { [weak vc] (item) in
+                vc?.select(friend: item)
+            })
 		return vc
 	}
 	
@@ -83,6 +89,7 @@ class MainTabBarController: UITabBarController {
         
         vc.navigationItem.title = "Sent"
         vc.navigationItem.rightBarButtonItem = UIBarButtonItem(title: "Send", style: .done, target: vc, action: #selector(sendMoney))
+        
         vc.service = SentTransfersAPIItemServiceAdapter(
             api: TransfersAPI.shared,
             select: { [weak vc] (item) in
@@ -214,6 +221,24 @@ struct ReceivedTransfersAPIItemServiceAdapter: ItemsService {
     }
 }
 
+struct FriendsCacheItemsServiceAdapter: ItemsService {
+    let cache: FriendsCache
+    let select: (Friend) -> Void
+    
+    func loadItems(completion: @escaping (Result<[ItemViewModel], Error>) -> Void) {
+        cache.loadFriends { (result) in
+            DispatchQueue.mainAsyncIfNeeded {
+                completion(result.map { items in
+                    items.map { item in
+                        ItemViewModel(friend: item, selection: {
+                            select(item)
+                        })
+                    }
+                })
+            }
+        }
+    }
+}
 // Null Object Pattern
 /*
  An instance that shares the same interface as another, but does nothing

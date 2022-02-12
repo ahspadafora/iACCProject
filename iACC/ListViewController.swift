@@ -17,6 +17,7 @@ class ListViewController: UITableViewController {
     var items = [ItemViewModel]()
     
     var service: ItemsService?
+    var cache: ItemsService?
     
     var retryCount = 0
     var maxRetryCount = 0
@@ -31,14 +32,12 @@ class ListViewController: UITableViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
         refreshControl = UIRefreshControl()
         refreshControl?.addTarget(self, action: #selector(refresh), for: .valueChanged)
     }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        
         if tableView.numberOfRows(inSection: 0) == 0 {
             refresh()
         }
@@ -67,15 +66,11 @@ class ListViewController: UITableViewController {
             retryCount = 0
             
             if fromFriendsScreen && User.shared?.isPremium == true {
-                (UIApplication.shared.connectedScenes.first?.delegate as! SceneDelegate).cache.loadFriends { [weak self] result in
+                cache?.loadItems { [weak self] result in
                     DispatchQueue.mainAsyncIfNeeded {
                         switch result {
                         case let .success(items):
-                            self?.items = items.map { item in
-                                ItemViewModel(friend: item) { [weak self] in
-                                    self?.select(friend: item)
-                                }
-                            }
+                            self?.items = items
                             self?.tableView.reloadData()
                             
                         case let .failure(error):
